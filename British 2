@@ -74,7 +74,14 @@ with col2:
     
     st.markdown(html_title_centered, unsafe_allow_html=True)
 
-st.header()
+
+# --- Raw Data Display ---
+# This block is now fully functional because 'data' is defined earlier.
+if st.checkbox('Show raw data'):
+    st.subheader('Raw data (First 100 Rows)')
+    st.dataframe(data.head(100)) 
+
+# ... (Your Raw Data Display block ends here)
 
 # --- Raw Data Display ---
 data = load_data() 
