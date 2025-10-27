@@ -329,7 +329,7 @@ fig_day = px.bar(
     template="plotly_white"
 )
 fig_day.update_layout(height=400)
-st.plotly_chart(fig_day)
+st.plotly_chart(fig_day) 
 
 
 
