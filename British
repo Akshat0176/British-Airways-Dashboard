@@ -1,0 +1,149 @@
+import streamlit as st 
+import plotly.express as px 
+import pandas as pd 
+from PIL import Image
+import warnings
+warnings.filterwarnings('ignore') 
+#Streamlit Configuration
+st.set_page_config(layout = 'wide')
+st.markdown('<style>div.block-container{padding-top:1rem;}</style>', unsafe_allow_html=True)
+@st.cache_data 
+def load_data(): 
+    # NOTE: Using your local path for debugging, but recommend a relative path.
+    try:
+        df = pd.read_csv('/Users/akshat17/Desktop/customer_booking.csv', encoding= 'latin-1') 
+    except FileNotFoundError:
+        st.error("Error: CSV file not found. Check path: /Users/akshat17/Desktop/customer_booking.csv")
+        return pd.DataFrame()
+        
+    df['booking_status'] = df['booking_complete'].map({0: 'Incomplete', 1: 'Complete'})
+    df['has_baggage'] = df['wants_extra_baggage'].map({0: 'No', 1: 'Yes'})
+    df['has_preferred_seat'] = df['wants_preferred_seat'].map({0: 'No', 1: 'Yes'})
+    df['has_in_flight_meals'] = df['wants_in_flight_meals'].map({0: 'No', 1: 'Yes'})
+
+    day_order = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    df['flight_day'] = pd.Categorical(df['flight_day'], categories=day_order, ordered=True)
+
+    df = df[df['purchase_lead'] >= 0]
+    df = df[df['length_of_stay'] >= 0]
+
+    return df
+
+# Initialize the text widget
+data_load_state = st.text('Loading data...')
+
+# 1. Call the function to load the data immediately after initializing the status text
+data = load_data() 
+
+# 2. Update the status text once the data is loaded
+data_load_state.text("Done loading data! (using st.cache_data)") 
+
+# Handle case where data loading failed
+if data.empty:
+    st.stop()
+# -----------------------------------------------------------
+
+# --- Header (Logo and Title) ---
+# Load the image
+try:
+    image = Image.open('/Users/akshat17/Desktop/British airways.jpg')
+except FileNotFoundError:
+    st.warning("Warning: Image file not found. Check path: /Users/akshat17/Desktop/British airways.jpg")
+    image = None
+
+# Using a more appropriate ratio for a logo and a wide title column
+col1, col2 = st.columns([1, 8]) 
+
+with col1:
+    if image:
+        st.image(image, width=200) 
+
+with col2:
+    html_title_centered = """
+    <style>
+    .centered-title-text {
+        font-weight: bold;
+        padding: 5px;
+        border-radius: 6px;
+        text-align: center; 
+    }
+    </style>
+    
+    <h1 class="centered-title-text">British Airways Dashboard</h1>
+    """
+    
+    st.markdown(html_title_centered, unsafe_allow_html=True)
+
+
+# --- Raw Data Display ---
+# This block is now fully functional because 'data' is defined earlier.
+if st.checkbox('Show raw data'):
+    st.subheader('Raw data (First 100 Rows)')
+    st.dataframe(data.head(100)) 
+
+# ... (Your Raw Data Display block ends here)
+
+# --- Raw Data Display ---
+data = load_data() 
+
+data_load_state.text("Done! (using st.cache_data)") 
+
+if st.checkbox('Show raw data'):
+    st.subheader('Raw data (First 100 Rows)')
+    st.dataframe(data.head(100))
+
+# -------------------- INSERTED OVERVIEW CODE --------------------
+
+st.header("📊 Dataset Overview")
+st.markdown("---") # Separator for visual clarity
+
+# --- Calculate Key Metrics ---
+
+# Most Travelled Route
+# Group by 'route' and count occurrences, then get the top one
+most_travelled_route = data['route'].value_counts().idxmax()
+route_count = data['route'].value_counts().max()
+
+# Longest and Shortest Flights (based on length_of_stay)
+# Note: 'length_of_stay' is typically about the destination, but it's the closest proxy for "flight duration" or "trip length" in this dataset.
+longest_stay = data['length_of_stay'].max()
+shortest_stay = data['length_of_stay'].min()
+
+# Average Lead Time
+avg_lead_time = data['purchase_lead'].mean()
+
+# Booking Completion Rate
+completion_rate = data['booking_complete'].mean() * 100
+
+# --- Display Metrics using st.columns for a clean layout ---
+st.subheader("Key Statistics")
+col_a, col_b, col_c = st.columns(3)
+
+with col_a:
+    st.metric(
+        label="Total Records", 
+        value=f"{len(data):,}"
+    )
+
+with col_b:
+    st.metric(
+        label="Average Purchase Lead Time (Days)", 
+        value=f"{avg_lead_time:.0f}"
+    )
+    
+with col_c:
+    st.metric(
+        label="Booking Completion Rate", 
+        value=f"{completion_rate:.1f} %"
+    )
+
+st.subheader("Travel Insights")
+
+st.markdown(f"""
+- **Most Travelled Route:** The most frequent route booked is **{most_travelled_route}**, with **{route_count:,}** bookings.
+- **Longest Trip/Stay:** The maximum length of stay observed is **{longest_stay} days**.
+- **Shortest Trip/Stay:** The minimum length of stay observed is **{shortest_stay} days**.
+- **Number of Unique Routes:** The dataset covers **{data['route'].nunique()}** distinct flight routes.
+""")
+
+# ----------------------------------------------------------------
