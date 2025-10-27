@@ -16,8 +16,7 @@ def load_data():
     
     # NOTE: This path is specific to your local machine.
     # If the app were deployed, this would need to be changed.
-    df = pd.read_csv('/Users/akshat17/Desktop/customer_booking.csv', encoding='latin1')
-    
+    df = pd.read_csv('customer_booking.csv', encoding='latin1')    
     # Data Transformations
     df['booking_status'] = df['booking_complete'].map({0: 'Incomplete', 1: 'Complete'})
     df['has_baggage'] = df['wants_extra_baggage'].map({0: 'No', 1: 'Yes'})
