@@ -2,76 +2,69 @@ import streamlit as st
 import plotly.express as px 
 import pandas as pd 
 import numpy as np
+import time
 from PIL import Image
 import warnings
 warnings.filterwarnings('ignore') 
 
-# --- Streamlit Configuration (MUST be first) ---
+# Streamlit Configuration
 st.set_page_config(layout = 'wide')
 st.markdown('<style>div.block-container{padding-top:1rem;}</style>', unsafe_allow_html=True)
 
-# --- Data Loading ---
-@st.cache_data 
-def load_data(): 
-    
-    # NOTE: This path is specific to your local machine.
-    # If the app were deployed, this would need to be changed.
+# Data Loading
+@st.cache_data
+def load_data(version_update=2): 
     df = pd.read_csv('customer_booking.csv', encoding='latin1')    
-    # Data Transformations
     df['booking_status'] = df['booking_complete'].map({0: 'Incomplete', 1: 'Complete'})
     df['has_baggage'] = df['wants_extra_baggage'].map({0: 'No', 1: 'Yes'})
     df['has_preferred_seat'] = df['wants_preferred_seat'].map({0: 'No', 1: 'Yes'})
     df['has_in_flight_meals'] = df['wants_in_flight_meals'].map({0: 'No', 1: 'Yes'})
-
-    # Map flight_day to proper order
     day_order = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     df['flight_day'] = pd.Categorical(df['flight_day'], categories=day_order, ordered=True)
-
     # Basic data cleaning: handle outliers in lead time and stay duration
     df = df[df['purchase_lead'] >= 0]
     df = df[df['length_of_stay'] >= 0]
-
     return df
-
 # --- CRITICAL FIX: Call the function and assign its return value to df ---
 data_load_state = st.text('Loading data...')
-df = load_data() 
+df = load_data(version_update=2)
 data_load_state.text("Data loaded successfully! (using st.cache_data)") 
 
+# Header (Logo and Title)
 
-# --- Header (Logo and Title) ---
-try:
-    image = Image.open('/Users/akshat17/Desktop/British airways.jpg')
-except FileNotFoundError:
-    image = None # Handle case where image path is incorrect/inaccessible
+timestamp = int(time.time())
+image = Image.open("britishairwayslogo5.png")  
+timestamp = int(time.time())
+image = Image.open('/Users/akshat17/Desktop/ML2/airbus Background Removed.png')
 
 
 # Using a more appropriate ratio for a logo and a wide title column
-col1, col2 = st.columns([1, 8]) 
+col1, col2, col3 = st.columns([2, 8, 1])
 
 with col1:
     if image:
-        st.image(image, width=200)
+        st.image("britishairwayslogo5.png", width=200)  # smaller width for side column
 
 with col2:
     html_title_centered = """
     <style>
-    /* Use a class selector to target the title within col2 */
     .centered-title-text {
         font-weight: bold;
         padding: 5px;
         border-radius: 6px;
-        /* The key CSS property to center the text */
         text-align: center; 
     }
     </style>
-    
     <h1 class="centered-title-text">British Airways Dashboard</h1>
     """
-    
     st.markdown(html_title_centered, unsafe_allow_html=True)
 
 st.header("✈️ British Airways Overview")
+
+with col3:
+    if image:
+        st.image("airbus Background Removed.png", width=200)
+
 
 # Core metrics
 most_travelled_route = df['route'].value_counts().idxmax()
@@ -88,12 +81,15 @@ shortest_route = df.loc[df['flight_duration'].idxmin(), 'route']
 # Completion rate
 completion_rate = df['booking_complete'].mean() * 100
 
+most_travelled_route = df['route'].value_counts().idxmax()
+
+avg_passengers = df['num_passengers'].mean()
 # Layout columns
 col_a, col_b, col_c, col_d, col_e= st.columns(5)
 
 with col_a:
     st.metric(
-        label="Total Records",
+        label="Total Bookings",
         value=f"{len(df):,}"
     )
 
@@ -115,7 +111,13 @@ with col_d:
     st.metric(
         label="Completion Rate",
         value=f"{completion_rate:.2f} %"
+    ) 
+with col_e: 
+    st.metric( 
+        label = "Most Travelled Route",
+        value = f"{most_travelled_route}"
     )
+
 
 
 st.subheader("Map of Flight Bookings")
@@ -248,7 +250,7 @@ with col2:
     st.plotly_chart(fig_scatter, use_container_width=True)
 with col3:
     st.subheader('Feature Correlation Heatmap')
-    numeric_df = df.select_dtypes(include=[np.number])  # Only numeric columns
+    numeric_df = df.select_dtypes(include=[np.number])  
     corr_matrix = numeric_df.corr(numeric_only=True)
     
     heatmap_fig = px.imshow(
@@ -327,8 +329,8 @@ fig_day = px.bar(
     labels={'Total_Bookings': 'Total Bookings', 'flight_day': 'Flight Day of Week'},
     template="plotly_white"
 )
-fig_day.update_layout(height=400)
-st.plotly_chart(fig_day) 
+fig_day.update_layout(height=400)  
+st.plotly_chart(fig_day)           
 
 
 
