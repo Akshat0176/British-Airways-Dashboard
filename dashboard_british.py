@@ -13,7 +13,7 @@ st.markdown('<style>div.block-container{padding-top:1rem;}</style>', unsafe_allo
 
 # Data Loading
 @st.cache_data
-def load_data(version_update=2): 
+def load_data(): 
     df = pd.read_csv('customer_booking.csv', encoding='latin1')    
     df['booking_status'] = df['booking_complete'].map({0: 'Incomplete', 1: 'Complete'})
     df['has_baggage'] = df['wants_extra_baggage'].map({0: 'No', 1: 'Yes'})
@@ -27,23 +27,31 @@ def load_data(version_update=2):
     return df
 # --- CRITICAL FIX: Call the function and assign its return value to df ---
 data_load_state = st.text('Loading data...')
-df = load_data(version_update=2)
+df = load_data()
 data_load_state.text("Data loaded successfully! (using st.cache_data)") 
 
 # Header (Logo and Title)
 
-timestamp = int(time.time())
-image = Image.open("britishairwayslogo5.png")  
-timestamp = int(time.time())
-image = Image.open('/Users/akshat17/Desktop/ML2/airbus Background Removed.png')
+try:
+    # 1. Load the logo (Ensure 'britishairwayslogo5.png' is in the repo)
+    logo_image = Image.open("britishairwayslogo5.png")  
+    
+    # 2. Load the airbus image (Ensure 'airbus Background Removed.png' is in the repo)
+    airbus_image = Image.open('airbus Background Removed.png')
+    
+    # Flag to check if images were loaded successfully
+    images_loaded = True 
 
+except FileNotFoundError:
+    st.error("Deployment Error: Image files not found! Ensure 'britishairwayslogo5.png' and 'airbus Background Removed.png' are committed to the repository.")
+    images_loaded = False
 
 # Using a more appropriate ratio for a logo and a wide title column
 col1, col2, col3 = st.columns([2, 8, 1])
 
 with col1:
-    if image:
-        st.image("britishairwayslogo5.png", width=200)  # smaller width for side column
+    if images_loaded:
+        st.image(logo_image, width=200)  # smaller width for side column
 
 with col2:
     html_title_centered = """
@@ -62,8 +70,8 @@ with col2:
 st.header("✈️ British Airways Overview")
 
 with col3:
-    if image:
-        st.image("airbus Background Removed.png", width=200)
+    if images_loaded:
+        st.image(airbus_image, width=200)
 
 
 # Core metrics
